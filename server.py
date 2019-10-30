@@ -1,10 +1,9 @@
+import sys
+import json
 import asyncio
 import websockets
 
 from websockets.exceptions import ConnectionClosedError
-
-import sys
-import signal
 
 
 def exit_server(sig, frame):
@@ -18,17 +17,19 @@ async def double_value(websocket, path):
         async for value in websocket:
             await asyncio.sleep(1)
             print(f"ws get: {value}")
-            if value.isdigit():
-                value = int(value) * 2
-                await websocket.send(str(value))
-                print(f"ws sent: {value}")
+            query = json.loads(value)
+
+            query['Number'] *= 2
+            query['Status'] = "OK"
+
+            response = json.dumps(query)         
+            await websocket.send(response)
+            print(f"ws sent: {response}")
     except ConnectionClosedError:
         print("connection closed")
 
 
 def main(*args, **kwargs):
-
-    signal.signal(signal.SIGINT, exit_server)
 
     port = 8765
     if len(args) > 0:
